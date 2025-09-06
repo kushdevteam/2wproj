@@ -1,0 +1,149 @@
+🎨 Draw Your Meme — Full Project Plan
+🚀 Concept
+
+Draw Your Meme is a meme token launchpad powered by PumpFun. Users can draw a meme, name it, give it a ticker, and instantly deploy a token from a pre-funded dev wallet. No wallet connection required — just creativity, fun, and instant meme launches.
+
+🖼 User Flow
+
+Homepage (Draw Your Meme)
+
+Branding: “Draw → Name → Launch.”
+
+500x500 drawing pad (fabric.js/Konva.js).
+
+Toolbar: brush, colors, eraser, undo, clear.
+
+Meme Token Setup
+
+User saves drawing (auto .png).
+
+Inputs:
+
+Token Name
+
+Token Ticker
+
+Launch
+
+Click Launch Token.
+
+Backend deploys token on PumpFun using dev wallet.
+
+Meme image + token details saved in DB.
+
+Launch Result Page
+
+Shows meme image, name, ticker, PumpFun link.
+
+Social share buttons (Twitter/X, Telegram).
+
+Auto-Tweet
+
+Project account tweets:
+
+Meme image
+
+Token name/ticker
+
+PumpFun link
+
+Community (Phase 2+)
+
+Meme gallery of launched tokens.
+
+Upvote system (Reddit-style).
+
+Leaderboards: “Most Voted” & “Trending.”
+
+Rewards (Manual)
+
+No wallet connect needed.
+
+Admin dashboard to check addresses (via Solscan/Helius API).
+
+Export holder/launcher addresses → manual airdrops.
+
+🔧 Technical Breakdown
+Frontend (Next.js + TailwindCSS + shadcn/ui)
+
+Drawing pad (fabric.js or Konva.js).
+
+Forms for name/ticker.
+
+Meme gallery + voting buttons.
+
+Results pages with share options.
+
+Backend (Node.js + Express/Fastify)
+
+Endpoints:
+
+/launch → deploys token via PumpFun API.
+
+/vote/:tokenId → upvotes meme.
+
+/gallery → fetches launched memes.
+
+Stores dev wallet securely (private key managed safely).
+
+Auto-tweets via Twitter API.
+
+Calls Solscan/Helius API to check addresses for rewards.
+
+Database (PostgreSQL/MongoDB)
+
+tokens: { id, name, ticker, memeImageURL, pumpfunLink, votes, createdAt }
+
+votes: { tokenId, voterIp OR userId, timestamp }
+
+Storage
+
+AWS S3 or Pinata/IPFS for meme images.
+
+📅 Development Roadmap
+
+Phase 1 – MVP
+
+Canvas drawing pad.
+
+Name/ticker input.
+
+Launch button (deploy via PumpFun from dev wallet).
+
+Launch result page.
+
+Phase 2 – Social
+
+Auto-tweet on launch.
+
+Public meme gallery (latest launches).
+
+Phase 3 – Community
+
+Upvote system.
+
+Trending/leaderboards.
+
+Phase 4 – Rewards Support
+
+Admin dashboard to view launches.
+
+APIs to fetch wallet addresses.
+
+Export for manual airdrops.
+
+🛠 Suggested Tech Stack
+
+Frontend: Next.js (React + TailwindCSS + shadcn/ui).
+
+Canvas: fabric.js or Konva.js.
+
+Backend: Node.js + Express/Fastify.
+
+DB: PostgreSQL (via Prisma ORM).
+
+Storage: AWS S3 or Pinata/IPFS.
+
+APIs: PumpFun API, Twitter API, Solscan/Helius API.
+
+✨ With Draw Your Meme, anyone can become a meme coin founder in minutes — just draw, name, and launch.

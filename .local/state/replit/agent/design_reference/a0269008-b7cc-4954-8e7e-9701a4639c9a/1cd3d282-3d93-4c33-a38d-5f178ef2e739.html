@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draw Your Meme - Meme Token Launchpad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(262.1 83.3% 57.8%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(188 100% 44%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(328 85.5% 70.2%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(262.1 83.3% 57.8%);
+            --radius: 0.75rem;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, hsl(262.1 83.3% 57.8%) 0%, hsl(328 85.5% 70.2%) 50%, hsl(188 100% 44%) 100%);
+        }
+        
+        .canvas-container {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .floating-toolbar {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .success-animation {
+            animation: successPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .meme-card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .meme-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-cyan-50 font-sans">
+    <!-- @COMPONENT: Header -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
+                        <i class="fas fa-palette text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                        Draw Your Meme
+                    </h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <span class="text-lg font-semibold text-muted-foreground">
+                        Draw <i class="fas fa-arrow-right text-primary mx-2"></i> 
+                        Name <i class="fas fa-arrow-right text-accent mx-2"></i> 
+                        Launch
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-gradient-to-r from-primary to-accent text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-all">
+                        <i class="fas fa-rocket mr-2"></i>Gallery
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Hero Section -->
+        <!-- @COMPONENT: HeroSection -->
+        <div class="text-center mb-12">
+            <h2 class="text-5xl md:text-6xl font-bold mb-6">
+                <span class="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                    Create Your Meme Token
+                </span>
+            </h2>
+            <p class="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Draw your meme, give it a name and ticker, then launch it instantly on PumpFun. 
+                No wallet connection required — just creativity and fun!
+            </p>
+        </div>
+        <!-- @END_COMPONENT: HeroSection -->
+
+        <!-- Main Content Grid -->
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+            <!-- Drawing Section -->
+            <!-- @COMPONENT: DrawingCanvas -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-2xl shadow-2xl p-6 canvas-container">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-2xl font-bold text-foreground">Draw Your Meme</h3>
+                        <div class="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <span>500×500px</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Canvas Container -->
+                    <div class="relative bg-gray-50 rounded-xl p-4 mb-6">
+                        <canvas id="drawingCanvas" width="500" height="500" class="border-2 border-dashed border-gray-300 rounded-lg mx-auto bg-white cursor-crosshair"></canvas>
+                        <!-- @FUNCTIONALITY: Fabric.js canvas for drawing with brush, colors, eraser tools -->
+                    </div>
+
+                    <!-- Drawing Toolbar -->
+                    <div class="floating-toolbar rounded-xl p-4 border">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <!-- Brush Tools -->
+                            <div class="flex items-center space-x-2">
+                                <button id="brushTool" class="p-2 bg-primary text-white rounded-lg shadow-md active-tool">
+                                    <i class="fas fa-paintbrush"></i>
+                                </button>
+                                <button id="eraserTool" class="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-gray-200">
+                                    <i class="fas fa-eraser"></i>
+                                </button>
+                            </div>
+
+                            <!-- Color Palette -->
+                            <div class="flex items-center space-x-2">
+                                <div class="grid grid-cols-6 gap-1">
+                                    <button class="w-8 h-8 bg-red-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#ef4444"></button>
+                                    <button class="w-8 h-8 bg-orange-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#f97316"></button>
+                                    <button class="w-8 h-8 bg-yellow-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#eab308"></button>
+                                    <button class="w-8 h-8 bg-green-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#22c55e"></button>
+                                    <button class="w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#3b82f6"></button>
+                                    <button class="w-8 h-8 bg-purple-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#a855f7"></button>
+                                    <button class="w-8 h-8 bg-pink-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#ec4899"></button>
+                                    <button class="w-8 h-8 bg-gray-900 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#111827"></button>
+                                    <button class="w-8 h-8 bg-gray-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#6b7280"></button>
+                                    <button class="w-8 h-8 bg-cyan-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#06b6d4"></button>
+                                    <button class="w-8 h-8 bg-indigo-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#6366f1"></button>
+                                    <button class="w-8 h-8 bg-emerald-500 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform" data-color="#10b981"></button>
+                                </div>
+                            </div>
+
+                            <!-- Brush Size -->
+                            <div class="flex items-center space-x-2">
+                                <label class="text-sm font-medium text-muted-foreground">Size:</label>
+                                <input type="range" id="brushSize" min="1" max="50" value="5" class="w-20">
+                                <span id="sizeDisplay" class="text-sm font-medium text-foreground w-8">5</span>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex items-center space-x-2 ml-auto">
+                                <button id="undoBtn" class="px-3 py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition-all">
+                                    <i class="fas fa-undo mr-2"></i>Undo
+                                </button>
+                                <button id="clearBtn" class="px-3 py-2 bg-destructive text-white rounded-lg hover:opacity-90 transition-all">
+                                    <i class="fas fa-trash mr-2"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: DrawingCanvas -->
+
+            <!-- Token Details Section -->
+            <!-- @COMPONENT: TokenForm -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-2xl shadow-2xl p-6">
+                    <h3 class="text-2xl font-bold text-foreground mb-6">Token Details</h3>
+                    
+                    <form id="tokenForm" class="space-y-6">
+                        <div>
+                            <label for="tokenName" class="block text-sm font-semibold text-foreground mb-2">
+                                Token Name <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="tokenName" 
+                                data-bind="tokenForm.name"
+                                placeholder="e.g., Doge to the Moon" 
+                                class="w-full px-4 py-3 bg-input border border-border rounded-xl focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                                required
+                            />
+                            <p class="text-xs text-muted-foreground mt-1">Choose a catchy name for your meme token</p>
+                        </div>
+
+                        <div>
+                            <label for="tokenTicker" class="block text-sm font-semibold text-foreground mb-2">
+                                Token Ticker <span class="text-destructive">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="tokenTicker" 
+                                data-bind="tokenForm.ticker"
+                                placeholder="e.g., MOON" 
+                                class="w-full px-4 py-3 bg-input border border-border rounded-xl focus:ring-2 focus:ring-ring focus:border-transparent transition-all uppercase"
+                                maxlength="10"
+                                required
+                            />
+                            <p class="text-xs text-muted-foreground mt-1">Short symbol (2-10 characters)</p>
+                        </div>
+
+                        <div class="bg-muted rounded-xl p-4">
+                            <h4 class="font-semibold text-foreground mb-2">
+                                <i class="fas fa-info-circle text-primary mr-2"></i>How it works
+                            </h4>
+                            <ul class="text-sm text-muted-foreground space-y-1">
+                                <li>• Your meme will be saved as the token image</li>
+                                <li>• Token deployed instantly on PumpFun</li>
+                                <li>• No wallet connection required</li>
+                                <li>• Share your creation on social media</li>
+                            </ul>
+                        </div>
+
+                        <!-- Launch Button -->
+                        <button 
+                            type="submit" 
+                            id="launchBtn"
+                            data-event="click:handleLaunch"
+                            data-implementation="Should validate form and canvas, then deploy via PumpFun API"
+                            class="w-full bg-gradient-to-r from-primary via-accent to-secondary text-white py-4 px-6 rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-2xl hover:shadow-primary/25"
+                        >
+                            <i class="fas fa-rocket mr-3"></i>Launch Token 🚀
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Recent Launches Preview -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h4 class="text-lg font-bold text-foreground mb-4">Recent Launches</h4>
+                    <div class="space-y-3">
+                        <!-- @MAP: recentTokens.slice(0,3).map(token => ( -->
+                        <div class="flex items-center space-x-3 p-3 bg-muted rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                                <span class="text-white text-xs font-bold" data-mock="true">🐸</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-sm" data-mock="true" data-bind="token.name">Pepe Classic</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true" data-bind="token.ticker">$PEPE</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-muted-foreground">2 min ago</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 p-3 bg-muted rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center">
+                                <span class="text-white text-xs font-bold" data-mock="true">🚀</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-sm" data-mock="true" data-bind="token.name">Moon Shot</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true" data-bind="token.ticker">$SHOT</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-muted-foreground">5 min ago</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3 p-3 bg-muted rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-400 rounded-lg flex items-center justify-center">
+                                <span class="text-white text-xs font-bold" data-mock="true">💎</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-semibold text-sm" data-mock="true" data-bind="token.name">Diamond Hands</p>
+                                <p class="text-xs text-muted-foreground" data-mock="true" data-bind="token.ticker">$HODL</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-muted-foreground">8 min ago</p>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: TokenForm -->
+        </div>
+    </main>
+
+    <!-- Loading Modal -->
+    <!-- @COMPONENT: LoadingModal -->
+    <div id="loadingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+            <div class="loading-spinner w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <h3 class="text-2xl font-bold text-foreground mb-2">Launching Your Token!</h3>
+            <p class="text-muted-foreground mb-4">Deploying to PumpFun and saving your meme...</p>
+            <div class="bg-muted rounded-lg p-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span>Progress:</span>
+                    <span id="loadingProgress">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div id="progressBar" class="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all duration-1000 w-0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: LoadingModal -->
+
+    <!-- Success Modal -->
+    <!-- @COMPONENT: SuccessModal -->
+    <div id="successModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl mx-4">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 success-animation">
+                    <i class="fas fa-rocket text-white text-3xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-foreground mb-2">Token Launched Successfully! 🎉</h2>
+                <p class="text-muted-foreground">Your meme token is now live on PumpFun</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- Meme Preview -->
+                <div class="bg-muted rounded-xl p-4">
+                    <h4 class="font-semibold text-foreground mb-3">Your Meme</h4>
+                    <div class="bg-white rounded-lg p-4 text-center">
+                        <div class="w-32 h-32 bg-gradient-to-br from-purple-200 to-pink-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                            <span class="text-4xl" data-mock="true">🎨</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">Canvas artwork</p>
+                    </div>
+                </div>
+
+                <!-- Token Info -->
+                <div class="bg-muted rounded-xl p-4">
+                    <h4 class="font-semibold text-foreground mb-3">Token Details</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-muted-foreground">Name:</span>
+                            <span class="text-sm font-medium" id="successTokenName" data-mock="true">My Awesome Meme</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-muted-foreground">Ticker:</span>
+                            <span class="text-sm font-medium" id="successTokenTicker" data-mock="true">$MEME</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-muted-foreground">Chain:</span>
+                            <span class="text-sm font-medium text-primary">Solana</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-muted-foreground">Platform:</span>
+                            <span class="text-sm font-medium text-secondary">PumpFun</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-all">
+                        <i class="fab fa-twitter mr-2"></i>Share on Twitter
+                    </button>
+                    <button class="flex-1 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-all">
+                        <i class="fab fa-telegram mr-2"></i>Share on Telegram  
+                    </button>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button class="flex-1 bg-gradient-to-r from-primary to-accent text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-all">
+                        <i class="fas fa-external-link-alt mr-2"></i>View on PumpFun
+                    </button>
+                    <button class="flex-1 bg-secondary text-white py-3 px-6 rounded-xl font-semibold hover:opacity-90 transition-all" onclick="closeSuccessModal()">
+                        <i class="fas fa-plus mr-2"></i>Create Another
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: SuccessModal -->
+
+    <script>
+        // Fabric.js Canvas Implementation
+        (function() {
+            let canvas;
+            let currentColor = '#000000';
+            let currentSize = 5;
+            let isErasing = false;
+
+            // Initialize Canvas
+            function initCanvas() {
+                canvas = new fabric.Canvas('drawingCanvas', {
+                    isDrawingMode: true,
+                    width: 500,
+                    height: 500
+                });
+
+                canvas.freeDrawingBrush.width = currentSize;
+                canvas.freeDrawingBrush.color = currentColor;
+
+                // Canvas background
+                canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+            }
+
+            // Tool Events
+            document.getElementById('brushTool').addEventListener('click', function() {
+                isErasing = false;
+                canvas.isDrawingMode = true;
+                canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+                canvas.freeDrawingBrush.width = currentSize;
+                canvas.freeDrawingBrush.color = currentColor;
+                
+                // Update active state
+                document.querySelectorAll('[id$="Tool"]').forEach(btn => btn.classList.remove('active-tool', 'bg-primary', 'text-white'));
+                this.classList.add('active-tool', 'bg-primary', 'text-white');
+                this.classList.remove('bg-muted', 'text-muted-foreground');
+            });
+
+            document.getElementById('eraserTool').addEventListener('click', function() {
+                isErasing = true;
+                canvas.isDrawingMode = true;
+                canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
+                canvas.freeDrawingBrush.width = currentSize * 2;
+                
+                // Update active state
+                document.querySelectorAll('[id$="Tool"]').forEach(btn => btn.classList.remove('active-tool', 'bg-primary', 'text-white'));
+                this.classList.add('active-tool', 'bg-primary', 'text-white');
+                this.classList.remove('bg-muted', 'text-muted-foreground');
+            });
+
+            // Color Selection
+            document.querySelectorAll('[data-color]').forEach(colorBtn => {
+                colorBtn.addEventListener('click', function() {
+                    currentColor = this.dataset.color;
+                    if (!isErasing) {
+                        canvas.freeDrawingBrush.color = currentColor;
+                    }
+                    
+                    // Update active color
+                    document.querySelectorAll('[data-color]').forEach(btn => btn.classList.remove('ring-4', 'ring-primary'));
+                    this.classList.add('ring-4', 'ring-primary');
+                });
+            });
+
+            // Brush Size
+            const brushSizeSlider = document.getElementById('brushSize');
+            const sizeDisplay = document.getElementById('sizeDisplay');
+            
+            brushSizeSlider.addEventListener('input', function() {
+                currentSize = parseInt(this.value);
+                sizeDisplay.textContent = currentSize;
+                
+                if (canvas.freeDrawingBrush) {
+                    canvas.freeDrawingBrush.width = isErasing ? currentSize * 2 : currentSize;
+                }
+            });
+
+            // Canvas Actions
+            document.getElementById('undoBtn').addEventListener('click', function() {
+                const objects = canvas.getObjects();
+                if (objects.length > 0) {
+                    canvas.remove(objects[objects.length - 1]);
+                    canvas.renderAll();
+                }
+            });
+
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                canvas.clear();
+                canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+            });
+
+            // Form Handling
+            document.getElementById('tokenForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const tokenName = document.getElementById('tokenName').value.trim();
+                const tokenTicker = document.getElementById('tokenTicker').value.trim().toUpperCase();
+                
+                if (!tokenName || !tokenTicker) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                if (canvas.isEmpty()) {
+                    alert('Please draw your meme first!');
+                    return;
+                }
+
+                launchToken(tokenName, tokenTicker);
+            });
+
+            // Token Launch Simulation
+            function launchToken(name, ticker) {
+                // Show loading modal
+                document.getElementById('loadingModal').classList.remove('hidden');
+                document.getElementById('loadingModal').classList.add('flex');
+                
+                let progress = 0;
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('loadingProgress');
+                
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15 + 5;
+                    if (progress > 100) progress = 100;
+                    
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            showSuccessModal(name, ticker);
+                        }, 500);
+                    }
+                }, 200);
+            }
+
+            function showSuccessModal(name, ticker) {
+                // Hide loading modal
+                document.getElementById('loadingModal').classList.add('hidden');
+                document.getElementById('loadingModal').classList.remove('flex');
+                
+                // Update success modal content
+                document.getElementById('successTokenName').textContent = name;
+                document.getElementById('successTokenTicker').textContent = '$' + ticker;
+                
+                // Show success modal
+                document.getElementById('successModal').classList.remove('hidden');
+                document.getElementById('successModal').classList.add('flex');
+            }
+
+            // Close success modal and reset form
+            window.closeSuccessModal = function() {
+                document.getElementById('successModal').classList.add('hidden');
+                document.getElementById('successModal').classList.remove('flex');
+                
+                // Reset form
+                document.getElementById('tokenForm').reset();
+                canvas.clear();
+                canvas.setBackgroundColor('#ffffff', canvas.renderAll.bind(canvas));
+            }
+
+            // Initialize everything when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                initCanvas();
+                
+                // Set default active color (black)
+                document.querySelector('[data-color="#111827"]').classList.add('ring-4', 'ring-primary');
+            });
+
+            // Auto-uppercase ticker input
+            document.getElementById('tokenTicker').addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        })();
+
+        // TODO: Implement actual PumpFun API integration
+        // TODO: Implement image saving to storage (AWS S3/IPFS)
+        // TODO: Implement social media sharing APIs
+        // TODO: Add form validation and error handling
+        // TODO: Implement responsive canvas behavior for mobile
+        // TODO: Add auto-tweet functionality
+    </script>
+</body>
+</html>
